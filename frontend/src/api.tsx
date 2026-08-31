@@ -86,16 +86,22 @@ function paginationFrom<T>(data: PaginatedResponse<T> | T[]): PaginationMeta {
 export async function loadLibrary(
   token?: string,
   page = 1,
+  search = "",
 ): Promise<LibraryData> {
+  const booksParams = new URLSearchParams({ page: String(page) });
+  if (search.trim()) booksParams.set("search", search.trim());
   const [authorsData, authorAccountsData, booksData] = await Promise.all([
     request<PaginatedResponse<Author> | Author[]>("/authors/", { token }),
     request<PaginatedResponse<AuthorAccount> | AuthorAccount[]>(
       "/author-accounts/",
       { token },
     ),
-    request<PaginatedResponse<Book> | Book[]>(`/books/?page=${page}`, {
-      token,
-    }),
+    request<PaginatedResponse<Book> | Book[]>(
+      `/books/?${booksParams.toString()}`,
+      {
+        token,
+      },
+    ),
   ]);
 
   return {

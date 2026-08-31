@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, generics, status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from library.permissions import IsAuthor, IsOwnerOrReadOnly
 from library.serializers import (
@@ -64,8 +65,9 @@ class BookListView(generics.ListCreateAPIView):
     )
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["author", "owner"]
+    search_fields = ["title", "description", "isbn", "author__name", "owner__username"]
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)

@@ -6,6 +6,7 @@ import {
   LogIn,
   LogOut,
   Plus,
+  Search,
   UserRound,
 } from "lucide-react";
 import {
@@ -31,6 +32,7 @@ const emptyBook = {
 
 function useLibrary(token: string) {
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [authors, setAuthors] = useState<Author[]>([]);
   const [authorAccounts, setAuthorAccounts] = useState<
     { id: number; username: string }[]
@@ -43,11 +45,11 @@ function useLibrary(token: string) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  async function refresh(nextPage = page) {
+  async function refresh(nextPage = page, nextSearch = search) {
     setLoading(true);
     setError("");
     try {
-      const data = await loadLibrary(token, nextPage);
+      const data = await loadLibrary(token, nextPage, nextSearch);
       setAuthors(data.authors);
       setAuthorAccounts(data.authorAccounts);
       setBooks(data.books);
@@ -62,9 +64,14 @@ function useLibrary(token: string) {
   }
   useEffect(() => {
     void refresh(page);
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
   function goToPage(nextPage: number) {
     setPage(nextPage);
+  }
+  function applySearch(nextSearch: string) {
+    setSearch(nextSearch);
+    setPage(1);
   }
   return {
     authors,
@@ -72,10 +79,12 @@ function useLibrary(token: string) {
     books,
     booksPagination,
     page,
+    search,
     loading,
     error,
     refresh,
     goToPage,
+    applySearch,
   };
 }
 
@@ -95,16 +104,16 @@ function Layout({
   const location = useLocation();
   const links = token
     ? [
-        ["/dashboard", "Dashboard"],
-        ["/catalog", "Catalog"],
-        ["/authors", "Authors"],
-        ...(role === "author" ? [["/manage", "Manage library"]] : []),
-      ]
+      ["/dashboard", "Dashboard"],
+      ["/catalog", "Catalog"],
+      ["/authors", "Authors"],
+      ...(role === "author" ? [["/manage", "Manage library"]] : []),
+    ]
     : [
-        ["/catalog", "Catalog"],
-        ["/login", "Login"],
-        ["/register", "Register"],
-      ];
+      ["/catalog", "Catalog"],
+      ["/login", "Login"],
+      ["/register", "Register"],
+    ];
   return (
     <main className="shell">
       <header className="site-header">
@@ -336,7 +345,9 @@ function CatalogPage({
   books,
   booksPagination,
   page,
+  search,
   goToPage,
+  applySearch,
   loading,
   error,
 }: {
@@ -347,10 +358,21 @@ function CatalogPage({
     previous: string | null;
   };
   page: number;
+  search: string;
   goToPage: (page: number) => void;
+  applySearch: (search: string) => void;
   loading: boolean;
   error: string;
 }) {
+  const [searchInput, setSearchInput] = useState(search);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== search) applySearch(searchInput);
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+  const normalizedSearch = search.trim().toLowerCase();
   return (
     <>
       <section className="toolbar">
@@ -366,10 +388,31 @@ function CatalogPage({
         </Link>
       </section>
       <Status loading={loading} error={error} />
+      <section className="panel search-bar" aria-label="Search the catalog">
+        <label>
+          <Search size={18} /> Search
+          <input
+            type="search"
+            placeholder="Search by title, author, or description..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+        </label>
+        {normalizedSearch && (
+          <p className="search-result-count" role="status">
+            {loading
+              ? "Searching..."
+              : `${booksPagination.count} titles match.`}
+          </p>
+        )}
+      </section>
       <section className="catalog-list" aria-label="Book catalog">
         {books.map((book) => (
           <BookCard book={book} key={book.id} />
         ))}
+        {!loading && books.length === 0 && (
+          <p>No books match your search.</p>
+        )}
       </section>
       <Pagination
         count={booksPagination.count}
