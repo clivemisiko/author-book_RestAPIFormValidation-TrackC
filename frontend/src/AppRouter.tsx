@@ -64,7 +64,6 @@ function useLibrary(token: string) {
   }
   useEffect(() => {
     void refresh(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search]);
   function goToPage(nextPage: number) {
     setPage(nextPage);
@@ -370,7 +369,6 @@ function CatalogPage({
       if (searchInput !== search) applySearch(searchInput);
     }, 400);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
   const normalizedSearch = search.trim().toLowerCase();
   return (

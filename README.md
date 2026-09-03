@@ -80,3 +80,51 @@ npm run e2e
 ```
 
 The end-to-end tests use the production preview server on port `4173`.
+
+## Docker Setup
+
+Build and start the complete local stack with Docker Compose:
+
+```powershell
+docker compose up --build
+```
+
+This starts:
+
+- Postgres on `localhost:5432`
+- Django REST API on `http://localhost:8000`
+- React frontend on `http://localhost:5173`
+
+The backend service runs migrations before starting the development server. The frontend image is built with `VITE_API_BASE_URL=http://localhost:8000`, so browser requests go to the Dockerized API.
+
+Stop the stack with:
+
+```powershell
+docker compose down
+```
+
+To remove the Postgres data volume as well:
+
+```powershell
+docker compose down -v
+```
+
+## Containerized Checks
+
+Run backend tests inside the backend container:
+
+```powershell
+docker compose run --rm backend-test
+```
+
+Run frontend linting, unit tests, and build inside the frontend container:
+
+```powershell
+docker compose run --rm frontend-test
+```
+
+These test services use the `test` Compose profile, so they do not start during normal `docker compose up`.
+
+## Docker Secrets
+
+The Docker images do not copy `.env` files or bake real secrets into image layers. Local Compose uses `SECRET_KEY=dev-only-change-me` only for development. Production deployments should provide `SECRET_KEY`, database credentials, and other sensitive values through the deployment platform's secret manager.
