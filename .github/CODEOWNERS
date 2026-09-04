@@ -1,0 +1,13 @@
+# Default owner for all files in this repository.
+* @Misiko
+
+# GitHub automation and repository hygiene.
+/.github/ @Misiko
+
+# Backend and dependency files.
+/library/ @Misiko
+/config/ @Misiko
+/requirements.txt @Misiko
+
+# Frontend app.
+/frontend/ @Misiko
