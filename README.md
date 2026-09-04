@@ -125,6 +125,31 @@ docker compose run --rm frontend-test
 
 These test services use the `test` Compose profile, so they do not start during normal `docker compose up`.
 
+## GitHub Automation and Hygiene
+
+This repository includes GitHub collaboration and maintenance files under `.github/`:
+
+- Issue templates for bug reports and feature requests
+- A pull request template with validation and secret-check reminders
+- `CODEOWNERS` to request review from the repository owner
+- Dependabot configuration for Python, frontend npm packages, Docker, and GitHub Actions
+
+Dependabot checks for updates weekly and opens pull requests for dependency changes. Review those pull requests like normal code changes: confirm tests pass, scan the diff for risky version jumps, and merge only after the app still builds and runs correctly.
+
+Enable secret scanning in GitHub from repository `Settings` -> `Advanced Security` -> `Secret Protection`. After enabling it, secret scanning alerts appear in the repository security area when GitHub detects exposed credentials.
+
+If a credential is leaked:
+
+1. Treat it as compromised immediately.
+2. Identify the secret type, owner, file, line, commit, and affected services.
+3. Revoke or rotate the exposed credential at the provider.
+4. Update the app or CI/CD settings to use the new secret from GitHub Actions secrets or another secret manager.
+5. Check GitHub and provider audit logs for unauthorized use.
+6. Remove the secret from current code and decide with maintainers whether Git history cleanup is required.
+7. Close the secret scanning alert as revoked and document what happened.
+
+See `docs/security/leaked-secret-response.md` for the full checklist.
+
 ## Docker Secrets
 
 The Docker images do not copy `.env` files or bake real secrets into image layers. Local Compose uses `SECRET_KEY=dev-only-change-me` only for development. Production deployments should provide `SECRET_KEY`, database credentials, and other sensitive values through the deployment platform's secret manager.
