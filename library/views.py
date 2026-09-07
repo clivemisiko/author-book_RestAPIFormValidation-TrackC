@@ -81,6 +81,7 @@ class BookListView(generics.ListCreateAPIView):
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.select_related("author", "owner").all()
     serializer_class = BookSerializer
+
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
             return [permissions.AllowAny()]
