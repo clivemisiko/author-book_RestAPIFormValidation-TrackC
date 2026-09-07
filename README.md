@@ -103,6 +103,14 @@ Do not commit `.env` files or secret values. For local development, create a
 `.env` file from the settings expected by the project and keep it ignored by
 Git.
 
+### E2 CI/CD Pipeline
+
+I completed a full CI/CD pipeline that tests every push, builds both Docker
+images, and publishes them to GitHub Container Registry only after all checks
+pass. I learned how to gate image publishing with job dependencies and
+registry permissions. I found it challenging when coordinating matrix tests,
+Docker builds, and secure registry authentication.
+
 ## Docker Setup
 
 Build and start the complete local stack with Docker Compose:
