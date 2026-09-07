@@ -105,11 +105,16 @@ Git.
 
 ### E2 CI/CD Pipeline
 
-I completed a full CI/CD pipeline that tests every push, builds both Docker
-images, and publishes them to GitHub Container Registry only after all checks
-pass. I learned how to gate image publishing with job dependencies and
-registry permissions. I found it challenging when coordinating matrix tests,
-Docker builds, and secure registry authentication.
+The E2 CI/CD gate was completed and merged into `main`. The completed gate:
+
+- Runs backend and frontend linting, tests, and builds on every push and pull request.
+- Tests Python 3.12 and 3.13 in parallel with PostgreSQL.
+- Builds backend and frontend Docker images after all checks pass.
+- Publishes both images to GitHub Container Registry on successful pushes.
+- Blocks publishing when any required check fails.
+
+The gate was verified with successful checks on merged PR #18 and a deliberate
+failing-test run that produced failed matrix checks.
 
 ## Docker Setup
 
