@@ -14,7 +14,7 @@ from library.models import Author, Book
 class AuthorModelTest(TestCase):
     def test_create_author(self) -> None:
         author = Author.objects.create(name="Octavia Butler", bio="Science fiction author")
-        self.assertEqual(author.name, "Octavia Butler")
+        self.assertEqual(author.name, "Intentionally failing check")
         self.assertEqual(author.bio, "Science fiction author")
 
     def test_author_str_method(self) -> None:
