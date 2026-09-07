@@ -1,5 +1,7 @@
 # Author Book Library
 
+[![CI](https://github.com/clivemisiko/author-book_RestAPIFormValidation-TrackC/actions/workflows/ci.yaml/badge.svg)](https://github.com/clivemisiko/author-book_RestAPIFormValidation-TrackC/actions/workflows/ci.yaml)
+
 A full-stack library application with a Django REST API backend and a React/Vite frontend. Users can register and log in, manage authors, and create and browse books with optional cover images.
 
 ## Project Structure
@@ -80,6 +82,26 @@ npm run e2e
 ```
 
 The end-to-end tests use the production preview server on port `4173`.
+
+### GitHub Actions
+
+The `CI` workflow in `.github/workflows/ci.yaml` runs automatically on every
+push and pull request. It:
+
+- Runs the backend lint check with `flake8`.
+- Runs the Django test suite against PostgreSQL.
+- Runs the frontend lint, unit tests, and production build.
+- Tests Python 3.12 and 3.13 in parallel.
+- Caches Python and npm dependencies.
+
+The `main` branch is protected. Pull requests must pass both matrix checks
+(`Python 3.12 checks` and `Python 3.13 checks`) before they can be merged.
+Branches must also be up to date with `main`.
+
+The workflow reads `DJANGO_SECRET_KEY` from GitHub repository Actions secrets.
+Do not commit `.env` files or secret values. For local development, create a
+`.env` file from the settings expected by the project and keep it ignored by
+Git.
 
 ## Docker Setup
 
