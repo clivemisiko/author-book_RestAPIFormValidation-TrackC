@@ -238,3 +238,39 @@ class BookAPITests(TestCase):
         response = self.client.delete(reverse("book-detail", kwargs={"pk": self.book.pk}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Book.objects.filter(pk=self.book.pk).exists())
+
+
+class CorsHeaderTests(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+
+    def test_allowed_origin_receives_access_control_header(self) -> None:
+        response = self.client.get(
+            reverse("book-list-create"),
+            HTTP_ORIGIN="http://localhost:5173",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:5173",
+        )
+
+    def test_disallowed_origin_does_not_receive_access_control_header(self) -> None:
+        response = self.client.get(
+            reverse("book-list-create"),
+            HTTP_ORIGIN="http://malicious-site.example.com",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Origin"))
+
+    @override_settings(CORS_ALLOWED_ORIGINS=["http://104.248.50.1:5173"])
+    def test_staging_origin_allowed_when_configured(self) -> None:
+        response = self.client.get(
+            reverse("book-list-create"),
+            HTTP_ORIGIN="http://104.248.50.1:5173",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://104.248.50.1:5173",
+        )
