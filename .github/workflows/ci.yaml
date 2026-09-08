@@ -155,7 +155,8 @@ jobs:
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
             printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\nALLOWED_HOSTS=%s\n' \
-              "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" "$STAGING_ALLOWED_HOSTS" > "$env_file"
+              "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" \
+              "$STAGING_ALLOWED_HOSTS,127.0.0.1,localhost" > "$env_file"
             chmod 600 "$env_file"
 
             previous_backend=false
