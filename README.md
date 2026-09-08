@@ -105,7 +105,7 @@ Git.
 
 ### E2 CI/CD Pipeline
 
-The E2 CI/CD gate was completed and merged into `main`. The completed gate:
+The E2 CI/CD gate was completed and merged into `main`. The gate:
 
 - Runs backend and frontend linting, tests, and builds on every push and pull request.
 - Tests Python 3.12 and 3.13 in parallel with PostgreSQL.
@@ -115,6 +115,41 @@ The E2 CI/CD gate was completed and merged into `main`. The completed gate:
 
 The gate was verified with successful checks on merged PR #18 and a deliberate
 failing-test run that produced failed matrix checks.
+
+### E3 Staging Deployment
+
+The E3 deployment gate runs automatically after the Docker images are published
+from `main`. It:
+
+- Connects to the staging server over SSH.
+- Logs in to GitHub Container Registry and pulls the backend and frontend images.
+- Writes staging credentials to a protected server-side `.env.staging` file.
+- Starts PostgreSQL, Django, and Nginx with Docker Compose.
+- Waits for both staging smoke-test endpoints to respond successfully:
+  `http://127.0.0.1:8000/admin/login/` and `http://127.0.0.1:5173/`.
+- Stops the new stack and restores the previous images when a later deployment
+  fails its smoke test.
+- Reports the deployment as failed when the first deployment fails, because no
+  previous images are available for rollback.
+
+The staging Compose project is stored on the server at
+`/opt/author-book/docker-compose.staging.yml`. The staging services expose the
+backend on port `8000` and the frontend on port `5173`.
+
+The deployment requires these GitHub Actions secrets:
+
+- `SERVER_HOST`
+- `SERVER_USER`
+- `SERVER_SSH_KEY`
+- `STAGING_SECRET_KEY`
+- `STAGING_POSTGRES_PASSWORD`
+
+The deployment workflow does not store these values in the repository. Do not
+commit `.env.staging`, private SSH keys, database passwords, or Django secret
+keys.
+
+E3 was verified successfully on the merged `main` workflow after the readiness
+wait and first-deployment rollback fixes were applied.
 
 ## Docker Setup
 
