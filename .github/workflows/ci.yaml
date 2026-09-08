@@ -121,7 +121,7 @@ jobs:
           context: ./frontend
           file: frontend/Dockerfile
           build-args: |
-            VITE_API_BASE_URL=http://${{ secrets.SERVER_HOST }}:8000
+            VITE_API_BASE_URL=
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/author-book-frontend:latest
 
@@ -157,7 +157,7 @@ jobs:
             env_file="$app_dir/.env.staging"
             mkdir -p "$app_dir"
 
-            cors_origins="${STAGING_CORS_ALLOWED_ORIGINS:-http://${STAGING_ALLOWED_HOSTS}:5173,http://localhost:5173,http://127.0.0.1:5173}"
+            cors_origins="${STAGING_CORS_ALLOWED_ORIGINS:-http://${STAGING_ALLOWED_HOSTS},http://localhost,http://127.0.0.1}"
 
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
@@ -213,17 +213,16 @@ jobs:
                 command: >
                   sh -c "python manage.py migrate &&
                          python manage.py runserver 0.0.0.0:8000"
-                ports:
-                  - "8000:8000"
                 depends_on:
                   db:
                     condition: service_healthy
               frontend:
                 image: $FRONTEND_IMAGE
                 ports:
-                  - "5173:80"
+                  - "80:80"
                 depends_on:
-                  - backend
+                  backend:
+                    condition: service_started
             volumes:
               postgres_data:
               media_data:
@@ -234,14 +233,14 @@ jobs:
               backend_ready=false
               frontend_ready=false
               for attempt in $(seq 1 30); do
-                if curl --fail --silent http://127.0.0.1:8000/admin/login/ >/dev/null 2>&1; then
+                if curl --fail --silent http://127.0.0.1/admin/login/ >/dev/null 2>&1; then
                   backend_ready=true
                   break
                 fi
                 sleep 3
               done
               for attempt in $(seq 1 30); do
-                if curl --fail --silent http://127.0.0.1:5173/ >/dev/null 2>&1; then
+                if curl --fail --silent http://127.0.0.1/ >/dev/null 2>&1; then
                   frontend_ready=true
                   break
                 fi

@@ -126,15 +126,17 @@ from `main`. It:
 - Writes staging credentials to a protected server-side `.env.staging` file.
 - Starts PostgreSQL, Django, and Nginx with Docker Compose.
 - Waits for both staging smoke-test endpoints to respond successfully:
-  `http://127.0.0.1:8000/admin/login/` and `http://127.0.0.1:5173/`.
+  `http://127.0.0.1/admin/login/` and `http://127.0.0.1/`.
 - Stops the new stack and restores the previous images when a later deployment
   fails its smoke test.
 - Reports the deployment as failed when the first deployment fails, because no
   previous images are available for rollback.
 
 The staging Compose project is stored on the server at
-`/opt/author-book/docker-compose.staging.yml`. The staging services expose the
-backend on port `8000` and the frontend on port `5173`.
+`/opt/author-book/docker-compose.staging.yml`. NGINX is placed in front of both
+services and serves the frontend on port `80`, while proxying API traffic such as
+`/admin/`, `/login/`, `/register/`, `/authors/`, `/books/`, and `/media/` to the
+backend container.
 
 The deployment requires these GitHub Actions secrets:
 
@@ -145,7 +147,7 @@ The deployment requires these GitHub Actions secrets:
 - `STAGING_POSTGRES_PASSWORD`
 - `STAGING_POSTGRES_USER` (optional, defaults to `postgres`)
 - `STAGING_POSTGRES_DB` (optional, defaults to `author_book`)
-- `CORS_ALLOWED_ORIGINS` (optional, defaults to `http://<SERVER_HOST>:5173,http://localhost:5173,http://127.0.0.1:5173`)
+- `CORS_ALLOWED_ORIGINS` (optional, defaults to `http://<SERVER_HOST>,http://localhost,http://127.0.0.1`)
 
 The CI test runner uses isolated ephemeral containers for testing with default test credentials. The staging deployment workflow securely injects database credentials and server configurations via GitHub Actions secrets.
 
@@ -173,13 +175,12 @@ docker compose up --build
 This starts:
 
 - Postgres on `localhost:5432`
-- Django REST API on `http://localhost:8000`
-- React frontend on `http://localhost:5173`
+- Django REST API on `http://localhost:8000` for direct backend access
+- NGINX on `http://localhost/` serving the built frontend and proxying API traffic to the Django container
 
-The backend service runs migrations before starting the development server. The frontend image is built with `VITE_API_BASE_URL=http://localhost:8000`, so browser requests go to the Dockerized API.
+The backend service runs migrations before starting the development server. The frontend image is built with a blank `VITE_API_BASE_URL` by default so the browser uses the same origin through the NGINX proxy. The proxy routes API requests to the Django container while serving the built frontend bundle on port `80`.
 
 Stop the stack with:
-
 ```powershell
 docker compose down
 ```
