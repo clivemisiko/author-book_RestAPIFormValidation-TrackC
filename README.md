@@ -143,6 +143,14 @@ The deployment requires these GitHub Actions secrets:
 - `SERVER_SSH_KEY`
 - `STAGING_SECRET_KEY`
 - `STAGING_POSTGRES_PASSWORD`
+- `STAGING_POSTGRES_USER` (optional, defaults to `postgres`)
+- `STAGING_POSTGRES_DB` (optional, defaults to `author_book`)
+- `CORS_ALLOWED_ORIGINS` (optional, defaults to `http://<SERVER_HOST>:5173,http://localhost:5173,http://127.0.0.1:5173`)
+
+For CI test runs, the following secrets can also be configured:
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
 
 The deployment workflow does not store these values in the repository. Do not
 commit `.env.staging`, private SSH keys, database passwords, or Django secret
@@ -152,6 +160,12 @@ E3 was verified successfully on the merged `main` workflow after the readiness
 wait and first-deployment rollback fixes were applied.
 
 ## Docker Setup
+
+Before starting Docker Compose locally, create a `.env` file from the provided template:
+
+```powershell
+Copy-Item .env.example .env
+```
 
 Build and start the complete local stack with Docker Compose:
 
@@ -173,7 +187,7 @@ Stop the stack with:
 docker compose down
 ```
 
-To remove the Postgres data volume as well:
+To remove the Postgres data and media volumes as well:
 
 ```powershell
 docker compose down -v

@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: author_book
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-author_book}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d author_book"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-author_book}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,13 +20,17 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.dev
-      SECRET_KEY: dev-only-change-me
-      POSTGRES_DB: author_book
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.dev}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-127.0.0.1,localhost}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      POSTGRES_DB: ${POSTGRES_DB:-author_book}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    volumes:
+      - media_data:/app/media
     ports:
       - "8000:8000"
     command: >
@@ -40,13 +44,13 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.dev
-      SECRET_KEY: dev-only-change-me
-      POSTGRES_DB: author_book_test
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.dev}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+      POSTGRES_DB: ${POSTGRES_TEST_DB:-author_book_test}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
     command: python manage.py test
     depends_on:
       db:
@@ -59,7 +63,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:8000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
       - "5173:80"
     depends_on:
@@ -78,3 +82,4 @@ services:
 
 volumes:
   postgres_data:
+  media_data:
