@@ -148,10 +148,14 @@ jobs:
             set -eu
             app_dir=/opt/author-book
             compose_file="$app_dir/docker-compose.staging.yml"
+            env_file="$app_dir/.env.staging"
             mkdir -p "$app_dir"
 
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
+            printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\n' \
+              "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" > "$env_file"
+            chmod 600 "$env_file"
 
             previous_backend=false
             previous_frontend=false
@@ -210,20 +214,33 @@ jobs:
               postgres_data:
             EOF
 
-            docker compose -f "$compose_file" up -d
+            docker compose --env-file "$env_file" -f "$compose_file" up -d
             smoke_test() {
-              curl --fail --silent --show-error --retry 12 --retry-delay 5 \
-                http://127.0.0.1:8000/admin/login/ >/dev/null &&
-              curl --fail --silent --show-error --retry 12 --retry-delay 5 \
-                http://127.0.0.1:5173/ >/dev/null
+              backend_ready=false
+              frontend_ready=false
+              for attempt in $(seq 1 30); do
+                if curl --fail --silent http://127.0.0.1:8000/admin/login/ >/dev/null 2>&1; then
+                  backend_ready=true
+                  break
+                fi
+                sleep 3
+              done
+              for attempt in $(seq 1 30); do
+                if curl --fail --silent http://127.0.0.1:5173/ >/dev/null 2>&1; then
+                  frontend_ready=true
+                  break
+                fi
+                sleep 3
+              done
+              [ "$backend_ready" = true ] && [ "$frontend_ready" = true ]
             }
 
             if ! smoke_test; then
-              docker compose -f "$compose_file" down
+              docker compose --env-file "$env_file" -f "$compose_file" down
               if [ "$previous_backend" = true ] && [ "$previous_frontend" = true ]; then
                 docker tag "${BACKEND_IMAGE%:*}:previous" "$BACKEND_IMAGE"
                 docker tag "${FRONTEND_IMAGE%:*}:previous" "$FRONTEND_IMAGE"
-                docker compose -f "$compose_file" up -d
+                docker compose --env-file "$env_file" -f "$compose_file" up -d
               else
                 echo "Smoke test failed on the first deployment; no previous images exist."
               fi
