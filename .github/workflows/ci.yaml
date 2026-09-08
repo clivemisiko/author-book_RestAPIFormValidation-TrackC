@@ -220,6 +220,8 @@ jobs:
                 image: $FRONTEND_IMAGE
                 ports:
                   - "80:80"
+                volumes:
+                  - media_data:/usr/share/nginx/media:ro
                 depends_on:
                   backend:
                     condition: service_started
