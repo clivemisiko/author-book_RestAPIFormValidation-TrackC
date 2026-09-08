@@ -139,11 +139,12 @@ jobs:
           FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/author-book-frontend:latest
           STAGING_SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
           STAGING_POSTGRES_PASSWORD: ${{ secrets.STAGING_POSTGRES_PASSWORD }}
+          STAGING_ALLOWED_HOSTS: ${{ secrets.SERVER_HOST }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,BACKEND_IMAGE,FRONTEND_IMAGE,STAGING_SECRET_KEY,STAGING_POSTGRES_PASSWORD
+          envs: GHCR_TOKEN,GHCR_USER,BACKEND_IMAGE,FRONTEND_IMAGE,STAGING_SECRET_KEY,STAGING_POSTGRES_PASSWORD,STAGING_ALLOWED_HOSTS
           script: |
             set -eu
             app_dir=/opt/author-book
@@ -153,8 +154,8 @@ jobs:
 
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
-            printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\n' \
-              "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" > "$env_file"
+            printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\nALLOWED_HOSTS=%s\n' \
+              "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" "$STAGING_ALLOWED_HOSTS" > "$env_file"
             chmod 600 "$env_file"
 
             previous_backend=false
@@ -191,6 +192,7 @@ jobs:
                 environment:
                   DJANGO_SETTINGS_MODULE: config.settings.dev
                   SECRET_KEY: \${STAGING_SECRET_KEY}
+                  ALLOWED_HOSTS: \${ALLOWED_HOSTS}
                   POSTGRES_DB: author_book
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: \${STAGING_POSTGRES_PASSWORD}
