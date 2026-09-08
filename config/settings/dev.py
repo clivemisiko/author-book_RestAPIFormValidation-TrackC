@@ -1,4 +1,5 @@
 from config.settings.base import *  # noqa: F401, F403
+from decouple import config
 
 DEBUG = True
 ALLOWED_HOSTS = [
