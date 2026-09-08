@@ -153,12 +153,19 @@ jobs:
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
 
+            previous_backend=false
+            previous_frontend=false
             if docker image inspect "$BACKEND_IMAGE" >/dev/null 2>&1; then
               docker tag "$BACKEND_IMAGE" "${BACKEND_IMAGE%:*}:previous"
+              previous_backend=true
             fi
             if docker image inspect "$FRONTEND_IMAGE" >/dev/null 2>&1; then
               docker tag "$FRONTEND_IMAGE" "${FRONTEND_IMAGE%:*}:previous"
+              previous_frontend=true
             fi
+
+            docker pull "$BACKEND_IMAGE"
+            docker pull "$FRONTEND_IMAGE"
 
             cat > "$compose_file" <<EOF
             services:
@@ -213,9 +220,13 @@ jobs:
 
             if ! smoke_test; then
               docker compose -f "$compose_file" down
-              docker tag "${BACKEND_IMAGE%:*}:previous" "$BACKEND_IMAGE"
-              docker tag "${FRONTEND_IMAGE%:*}:previous" "$FRONTEND_IMAGE"
-              docker compose -f "$compose_file" up -d
+              if [ "$previous_backend" = true ] && [ "$previous_frontend" = true ]; then
+                docker tag "${BACKEND_IMAGE%:*}:previous" "$BACKEND_IMAGE"
+                docker tag "${FRONTEND_IMAGE%:*}:previous" "$FRONTEND_IMAGE"
+                docker compose -f "$compose_file" up -d
+              else
+                echo "Smoke test failed on the first deployment; no previous images exist."
+              fi
               exit 1
             fi
 
