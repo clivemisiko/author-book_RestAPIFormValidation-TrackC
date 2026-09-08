@@ -147,10 +147,7 @@ The deployment requires these GitHub Actions secrets:
 - `STAGING_POSTGRES_DB` (optional, defaults to `author_book`)
 - `CORS_ALLOWED_ORIGINS` (optional, defaults to `http://<SERVER_HOST>:5173,http://localhost:5173,http://127.0.0.1:5173`)
 
-For CI test runs, the following secrets can also be configured:
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
+The CI test runner uses isolated ephemeral containers for testing with default test credentials. The staging deployment workflow securely injects database credentials and server configurations via GitHub Actions secrets.
 
 The deployment workflow does not store these values in the repository. Do not
 commit `.env.staging`, private SSH keys, database passwords, or Django secret

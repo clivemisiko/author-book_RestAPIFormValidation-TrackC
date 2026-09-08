@@ -22,13 +22,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'author_book' }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'postgres' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB: author_book
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER || 'postgres' }} -d ${{ secrets.POSTGRES_DB || 'author_book' }}"
+          --health-cmd="pg_isready -U postgres -d author_book"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -57,9 +57,9 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: config.settings.dev
           SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-only-insecure-key-do-not-use-in-production' }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'author_book' }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'postgres' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB: author_book
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_HOST: 127.0.0.1
           POSTGRES_PORT: 5432
         run: python manage.py test
@@ -144,7 +144,7 @@ jobs:
           STAGING_POSTGRES_USER: ${{ secrets.STAGING_POSTGRES_USER || 'postgres' }}
           STAGING_POSTGRES_DB: ${{ secrets.STAGING_POSTGRES_DB || 'author_book' }}
           STAGING_ALLOWED_HOSTS: ${{ secrets.SERVER_HOST }}
-          STAGING_CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS || format('http://{0}:5173,http://localhost:5173,http://127.0.0.1:5173', secrets.SERVER_HOST) }}
+          STAGING_CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -157,12 +157,14 @@ jobs:
             env_file="$app_dir/.env.staging"
             mkdir -p "$app_dir"
 
+            cors_origins="${STAGING_CORS_ALLOWED_ORIGINS:-http://${STAGING_ALLOWED_HOSTS}:5173,http://localhost:5173,http://127.0.0.1:5173}"
+
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
             printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\nSTAGING_POSTGRES_USER=%s\nSTAGING_POSTGRES_DB=%s\nALLOWED_HOSTS=%s\nCORS_ALLOWED_ORIGINS=%s\n' \
               "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" "$STAGING_POSTGRES_USER" "$STAGING_POSTGRES_DB" \
               "$STAGING_ALLOWED_HOSTS,127.0.0.1,localhost" \
-              "$STAGING_CORS_ALLOWED_ORIGINS" > "$env_file"
+              "$cors_origins" > "$env_file"
             chmod 600 "$env_file"
 
             previous_backend=false
