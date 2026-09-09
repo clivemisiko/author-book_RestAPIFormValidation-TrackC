@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 const apiProxy = {
-  target: "http://127.0.0.1:8000",
+  target: process.env.VITE_API_BASE_URL || "http://localhost:8000",
   bypass(request) {
     if (request.headers.accept?.includes("text/html")) return "/index.html";
   },
