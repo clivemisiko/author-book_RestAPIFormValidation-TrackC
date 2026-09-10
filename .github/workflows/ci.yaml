@@ -219,7 +219,7 @@ jobs:
               frontend:
                 image: $FRONTEND_IMAGE
                 ports:
-                  - "80:80"
+                  - "127.0.0.1:8080:80"
                 volumes:
                   - media_data:/usr/share/nginx/media:ro
                 depends_on:
@@ -235,20 +235,29 @@ jobs:
               backend_ready=false
               frontend_ready=false
               for attempt in $(seq 1 30); do
-                if curl --fail --silent http://127.0.0.1/admin/login/ >/dev/null 2>&1; then
+                if curl --fail --silent http://127.0.0.1:8080/admin/login/ >/dev/null 2>&1; then
                   backend_ready=true
                   break
                 fi
                 sleep 3
               done
               for attempt in $(seq 1 30); do
-                if curl --fail --silent http://127.0.0.1/ >/dev/null 2>&1; then
+                if curl --fail --silent http://127.0.0.1:8080/ >/dev/null 2>&1; then
                   frontend_ready=true
                   break
                 fi
                 sleep 3
               done
-              [ "$backend_ready" = true ] && [ "$frontend_ready" = true ]
+              # Final check: HTTPS endpoint via public domain
+              https_ready=false
+              for attempt in $(seq 1 10); do
+                if curl --fail --silent https://cliveauthor.duckdns.org/ >/dev/null 2>&1; then
+                  https_ready=true
+                  break
+                fi
+                sleep 3
+              done
+              [ "$backend_ready" = true ] && [ "$frontend_ready" = true ] && [ "$https_ready" = true ]
             }
 
             if ! smoke_test; then
