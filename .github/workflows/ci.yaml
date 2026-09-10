@@ -161,10 +161,11 @@ jobs:
 
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
               --username "$GHCR_USER" --password-stdin
-            printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\nSTAGING_POSTGRES_USER=%s\nSTAGING_POSTGRES_DB=%s\nALLOWED_HOSTS=%s\nCORS_ALLOWED_ORIGINS=%s\n' \
+            printf 'STAGING_SECRET_KEY=%s\nSTAGING_POSTGRES_PASSWORD=%s\nSTAGING_POSTGRES_USER=%s\nSTAGING_POSTGRES_DB=%s\nALLOWED_HOSTS=%s\nCORS_ALLOWED_ORIGINS=%s\nCSRF_TRUSTED_ORIGINS=%s\n' \
               "$STAGING_SECRET_KEY" "$STAGING_POSTGRES_PASSWORD" "$STAGING_POSTGRES_USER" "$STAGING_POSTGRES_DB" \
               "$STAGING_ALLOWED_HOSTS,127.0.0.1,localhost" \
-              "$cors_origins" > "$env_file"
+              "$cors_origins" \
+              "https://cliveauthor.duckdns.org,http://cliveauthor.duckdns.org" > "$env_file"
             chmod 600 "$env_file"
 
             previous_backend=false
@@ -203,6 +204,7 @@ jobs:
                   SECRET_KEY: \${STAGING_SECRET_KEY}
                   ALLOWED_HOSTS: \${ALLOWED_HOSTS}
                   CORS_ALLOWED_ORIGINS: \${CORS_ALLOWED_ORIGINS}
+                  CSRF_TRUSTED_ORIGINS: \${CSRF_TRUSTED_ORIGINS:-https://cliveauthor.duckdns.org,http://cliveauthor.duckdns.org}
                   POSTGRES_DB: \${STAGING_POSTGRES_DB}
                   POSTGRES_USER: \${STAGING_POSTGRES_USER}
                   POSTGRES_PASSWORD: \${STAGING_POSTGRES_PASSWORD}

@@ -157,3 +157,12 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        "CSRF_TRUSTED_ORIGINS",
+        default="https://cliveauthor.duckdns.org,http://cliveauthor.duckdns.org,http://127.0.0.1:8080,http://localhost:8080"
+    ).split(",")
+    if origin.strip()
+]
